@@ -12,7 +12,7 @@ void setup()
 
   // Initialize WiFiManager
   WiFiManager wifiManager;
-  wifiManager.autoConnect("NodeMCU-Arduino-PlatformIO");
+  wifiManager.autoConnect("esp");
 
   // Confirm connection
   Serial.println("Connected!");

@@ -1,0 +1,52 @@
+<!-- html page to establish connection with base station -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 POST Request</title>
+  <script>
+    async function sendPostRequest() {
+      const baseStation = "001"; // Replace with your base station code
+      const domain = "http://esp.local"; // Replace with your mDNS domain
+      const statusDiv = document.getElementById("status");
+
+      statusDiv.textContent = "Sent Connection request to: " + domain;
+      statusDiv.style.color = "orange";
+      try {
+        // Sending the POST request
+        const response = await fetch(domain, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ command: "connect" }), // Example payload
+        });
+
+        // Handle the response
+        if (response.ok) {
+          const responseData = await response.text();
+          statusDiv.textContent = "Response: " + responseData;
+          statusDiv.style.color = "green";
+        } else {
+          statusDiv.textContent = "Error: Server returned " + response.status;
+          statusDiv.style.color = "red";
+        }
+      } catch (error) {
+        // If the domain is not found or other error occurs
+        statusDiv.textContent = "Error: Could not connect to ESP8266";
+        statusDiv.style.color = "red";
+        console.error("Request failed", error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>ESP8266 Connection Handshake</h1>
+  <h2>Using Base Station Code 001</h2>
+  <button onclick="sendPostRequest()">Send Connection Request</button>
+  <!-- represents connection status -->
+  <div id="status" style="margin-top: 20px; font-weight: bold;"></div>
+</body>
+</html>
