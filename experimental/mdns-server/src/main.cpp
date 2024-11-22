@@ -63,7 +63,7 @@ void setup(void) {
   //   the fully-qualified domain name is "esp8266.local"
   // - second argument is the IP address to advertise
   //   we send our IP address on the WiFi network
-  if (!MDNS.begin("chase")) {
+  if (!MDNS.begin("esp")) {
     Serial.println("Error setting up MDNS responder!");
     while (1) { delay(1000); }
   }
@@ -77,7 +77,7 @@ void setup(void) {
   MDNS.addService("http", "tcp", 80);
 }
 
-void loop(void) {
+/* void loop(void) {
 
   MDNS.update();
 
@@ -122,4 +122,92 @@ void loop(void) {
   client.print(s);
 
   Serial.println("Done with client");
+// }
+
+*/
+void loop(void) {
+
+  MDNS.update();
+
+  WiFiClient client = server.accept();
+  if (!client) { return; }
+  Serial.println("New client");
+
+  // Wait for data from client to become available
+  while (client.connected() && !client.available()) { delay(1); Serial.println("in loop"); }
+
+  // Read the HTTP request
+  // String raw = client.readStringUntil('\n');
+  // Serial.println(raw);
+  String req = client.readStringUntil('\r');
+  String raw = client.readString();
+  Serial.println(raw); 
+// First line of HTTP request looks like "GET /path HTTP/1.1"
+  // Retrieve the "/path" part by finding the spaces
+  int addr_start = req.indexOf(' ');
+  int addr_end = req.indexOf(' ', addr_start + 1);
+  if (addr_start == -1 || addr_end == -1) {
+    Serial.print("Invalid request: ");
+    Serial.println(req);
+    return;
+  }
+  req = req.substring(addr_start + 1, addr_end);
+  Serial.print("Request: ");
+  Serial.println(req);
+  client.flush();
+
+  String s;
+  /*
+  if (req == "/") {
+    IPAddress ip = WiFi.localIP();
+    String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
+    s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>Hello from ESP8266 at ";
+    s += ipStr;
+    s += "</html>\r\n\r\n";
+    Serial.println("Sending 200");
+  } else {
+    s = "HTTP/1.1 404 Not Found\r\n\r\n";
+    Serial.println("Sending 404");
+  } */
+  // client.print(s);
+
+  Serial.println("Done with client");
+
+  // Determine if the request is POST
+  if (req.indexOf("POST") >= 0) {
+    // Read POST body content
+    String body = "";
+    while (client.available()) {
+      body += (char)client.read();
+    }
+
+    Serial.println("POST Body: " + body);
+
+    // Example of processing POST request (adjust according to your use case)
+    if (body.indexOf("\"command\":\"connect\"") >= 0) {
+      client.print("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n");
+      client.print("Connected successfully");
+      Serial.println("Sent: Connected successfully");
+    } else {
+      client.print("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\n");
+      client.print("Invalid command");
+      Serial.println("Sent: Invalid command");
+    }
+  } else if (req == "/") {
+    IPAddress ip = WiFi.localIP();
+    String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
+    s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>Hello from ESP8266 at ";
+    s += ipStr;
+    s += "</html>\r\n\r\n";
+    Serial.println("Sending 200");
+    client.print(s);
+  } 
+  else {
+    client.print("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n");
+    client.print("Not Found");
+    Serial.println("Sent: 404 Not Found");
+  }
+
+//  client.stop();
+  // Serial.println("Client disconnected");
 }
