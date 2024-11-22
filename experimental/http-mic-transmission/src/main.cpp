@@ -4,8 +4,14 @@
 
 ESP8266WebServer server(80);
 
+/*
+  Program for getting mic data from website and passing it into ESP
+  If it is some value then ESP will light up
+  Using HTTP, TODO modify so LED is off when mic is turned off, make sure nothing is printed
+  make sure request is only sent from website when mic data is being collected
+*/
 void setup() {
-  Serial.begin(115200);  // Start serial communication for debugging
+  Serial.begin(9600);  // Start serial communication for debugging
   pinMode(LED_BUILTIN, OUTPUT);  // Initialize LED pin as output
   digitalWrite(LED_BUILTIN, HIGH);  // Turn off LED initially (active LOW)
 
