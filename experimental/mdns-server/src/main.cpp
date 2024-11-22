@@ -20,7 +20,7 @@
 #include <WiFiClient.h>
 
 #ifndef STASSID
-#define STASSID "King_Library_WIFI"
+#define STASSID "SJSU_guest"
 #define STAPSK ""
 #endif
 
