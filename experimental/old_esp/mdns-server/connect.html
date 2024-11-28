@@ -1,0 +1,54 @@
+<!-- html page to establish connection with base station -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 POST Request</title>
+  <script>
+    async function sendPostRequest() {
+      const baseStation = document.getElementById("baseStation").value; // TODO add a string field here for user to input baseStation code
+      const domain = "http://esp-" + baseStation + ".local"; // Replace with your mDNS domain
+      const statusDiv = document.getElementById("status");
+
+      statusDiv.textContent = "Sent Connection request to: " + domain;
+      statusDiv.style.color = "orange";
+      try {
+        // Sending the POST request
+        const response = await fetch(domain, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ command: "connect" }), // Example payload
+        });
+
+        // Handle the response
+        if (response.ok) {
+          const responseData = await response.text();
+          statusDiv.textContent = "Response: " + responseData;
+          statusDiv.style.color = "green";
+        } else {
+          statusDiv.textContent = "Error: Server returned " + response.status;
+          statusDiv.style.color = "red";
+        }
+      } catch (error) {
+        // If the domain is not found or other error occurs
+        statusDiv.textContent = "Error: Could not connect to esp-" + baseStation + ".local";
+        statusDiv.style.color = "red";
+        console.error("Request failed", error);
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>ESP8266 Connection Handshake</h1>
+  <h2>Enter Base Station Code</h2>
+  <!-- TODO add a field for baseStation var -->
+  <input type="text" id="baseStation" placeholder="Enter Base Station Code">
+  <button onclick="sendPostRequest()">Send Connection Request</button>
+  <!-- represents connection status -->
+  <div id="status" style="margin-top: 20px; font-weight: bold;"></div>
+</body>
+</html>
