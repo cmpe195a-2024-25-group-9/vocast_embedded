@@ -4,10 +4,24 @@
   GET requests are handled to return the IP address of the ESP8266 as a html webpage
 */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+#include <WiFiManager.h>
+
+/*
+#include <Arduino.h>
+#include <WiFi.h>
+#include <DNSServer.h>
+#include <WebServer.h>
+#include <WiFiManager.h>
+#include <HTTPClient.h>
+
+#include <WiFi.h>
+#include <ESPmDNS.h>
 #include <WiFiClient.h>
 #include <WiFiManager.h> // WiFi package used in use_wifi_package() method
+*/
 
 #ifndef STASSID
 // TODO define to your WiFi credentials
@@ -26,10 +40,15 @@ void handle_post_request(WiFiClient client);
 void handle_get_request(WiFiClient client, String req);
 
 // TCP server at port 80 will respond to HTTP requests
-WiFiServer server(80);
+// WiFiServer server(80);
+WebServer server(80);
+
+void handle_OnConnect();
+void handle_NotFound();
 
 void setup(void) {
   Serial.begin(9600);
+  // delay(100);
 
   if (USE_WIFI_PACKAGE) {
     use_wifi_package();
@@ -42,10 +61,19 @@ void setup(void) {
   //   the fully-qualified domain name is "esp8266.local"
   // - second argument is the IP address to advertise
   //   we send our IP address on the WiFi network
-  if (!MDNS.begin("esp-001")) {
+  if (!MDNS.begin("google")) {
     Serial.println("Error setting up MDNS responder!");
     while (1) { delay(1000); }
   }
+  Serial.println("mDNS responder started");
+  
+  server.on("/", handle_OnConnect);
+  server.onNotFound(handle_NotFound);
+
+  server.begin();
+  Serial.println("HTTP server started");
+
+/* 
   Serial.println("mDNS responder started");
 
   // Start TCP (HTTP) server
@@ -54,9 +82,25 @@ void setup(void) {
 
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+  */
+}
+
+void handle_OnConnect() {
+  server.send(
+    200, 
+    "text/html",
+    "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\"></head><body><h1>Hello Shaq</h1></body></html>"
+  ); 
+}
+
+void handle_NotFound(){
+  server.send(404, "text/plain", "Not found");
 }
 
 void loop(void) {
+  server.handleClient();
+  
+  /* 
   MDNS.update();
 
   // Check if a client has connected
@@ -84,7 +128,7 @@ void loop(void) {
     client.print(s);
 
     client.stop();
-    return;
+    return; 
   }
 
   // Handle POST requests
@@ -96,7 +140,7 @@ void loop(void) {
   }
   client.stop(); // TODO maybe do not stop client to allow for persistent connections for POST request when it is requesting connection
   // Also technically do not need to "establish" or handshake connection, as long as user can make requests it does not need to be stateful
-  Serial.println("Done with client");
+  Serial.println("Done with client"); */
 }
 
 void use_wifi_package() {

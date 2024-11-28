@@ -1,9 +1,14 @@
+/*
+  Simple network using wifi library to configure esp to network
+  makes request to test route to print content
+*/
+
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <DNSServer.h>
-#include <ESP8266WebServer.h>
+#include <WebServer.h>
 #include <WiFiManager.h>
-#include <ESP8266HTTPClient.h>
+#include <HTTPClient.h>
 
 // reference: https://loginov-rocks.medium.com/quick-start-with-nodemcu-v3-esp8266-arduino-ecosystem-and-platformio-ide-b8415bf9a038
 void setup()
