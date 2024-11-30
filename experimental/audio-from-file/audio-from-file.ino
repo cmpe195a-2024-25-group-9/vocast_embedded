@@ -41,7 +41,7 @@ void setup() {
 
 void loop() {
     // Open the audio file from LittleFS
-    File audioFile = LittleFS.open("/fatiha_1.wav", "r");
+    File audioFile = LittleFS.open("/fatiha.wav", "r");
     if (!audioFile) {
         Serial.println("Failed to open /fatiha.wav");
         
