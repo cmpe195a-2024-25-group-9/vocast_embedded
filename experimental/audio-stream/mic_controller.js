@@ -6,7 +6,7 @@ let isMicActive = false;
         // Initialize WebSocket connection
         function initWebSocket() {
             // Connect to the ESP32 WebSocket server (replace with actual ESP32 IP address)
-            webSocket = new WebSocket('ws://172.20.10.2:81');  // Replace with your ESP32 IP address
+            webSocket = new WebSocket('ws://10.0.0.222:81');  // Replace with your ESP32 IP address
             
             webSocket.onopen = () => {
                 console.log('WebSocket connected!');
@@ -45,7 +45,28 @@ let isMicActive = false;
             // Request microphone access
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioContext = new AudioContext();
+
+                // Load the AudioWorklet
+                await audioContext.audioWorklet.addModule('pcm-processor.js');
+
+                const microphone = audioContext.createMediaStreamSource(micStream);
+                const pcmProcessor = new AudioWorkletNode(audioContext, 'pcm-processor');
+
+                microphone.connect(pcmProcessor);
+
+                pcmProcessor.port.onmessage = (event) => {
+                    const pcmBuffer = event.data; // PCM data from the processor
+                    if (webSocket.readyState === WebSocket.OPEN) {
+                        webSocket.send(pcmBuffer); // Send PCM data as ArrayBuffer
+                    }
+                };
+
+
+
+                /*
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const audioContext = new (window.AudioContext || window.AudioContext)();
                 const microphone = audioContext.createMediaStreamSource(micStream);
                 const analyser = audioContext.createAnalyser();
                 microphone.connect(analyser);
@@ -62,6 +83,7 @@ let isMicActive = false;
                 }
 
                 sendAudioData();  // Start sending data
+                */
             } catch (error) {
                 console.error('Error accessing microphone:', error);
                 micButton.classList.remove('unmuted');

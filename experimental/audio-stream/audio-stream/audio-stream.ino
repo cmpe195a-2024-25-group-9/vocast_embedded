@@ -4,16 +4,16 @@
 #include <WiFiManager.h>
 
 // WiFi credentials
-const char* ssid = "Fardin's iPhone";
-const char* password = "freewifi";
+const char* ssid = "HaqueWiFi";
+const char* password = "!Curtis215";
 
 // I2S pins
 #define I2S_BCLK_PIN    15
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
-#define SAMPLE_RATE     44100
+#define SAMPLE_RATE     48000
 
-#define USE 1
+#define USE_WIFI_PACKAGE 0
 
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -25,7 +25,7 @@ void setup() {
   // Start Serial Monitor
   Serial.begin(115200);
   
-  if (USE) {
+  if (USE_WIFI_PACKAGE) {
     WiFiManager wifiManager;
     wifiManager.autoConnect("esp");  // Start AP for WiFi config if no known network is available
 
@@ -86,7 +86,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
     case WStype_BIN:
       // Handle binary audio data (received in chunks)
-      if (length % sizeof(audioBuffer) == 0) {
+      // Serial.println(F("in payload"));
+      if (length % sizeof(int16_t) == 0) {
         memcpy(audioBuffer, payload, length);
         size_t bytesWritten = 0;
         i2s_write(I2S_NUM_0, audioBuffer, length, &bytesWritten, portMAX_DELAY);
