@@ -57,6 +57,7 @@ void loop() {
         }
         return;
     }
+    // print all files in the filesystem
     File root = LittleFS.open("/");
     File file = root.openNextFile();
 
@@ -69,9 +70,8 @@ void loop() {
     }
 
     // Skip the WAV file header (44 bytes), but adjust this for MP3 file handling
-    // Since we're working with MP3, you'd typically need an MP3 decoder, 
-    // but this part assumes the file format is already ready for I2S.
-    audioFile.seek(44, SeekSet);  // Skip the header (if applicable for non-MP3 files)
+    // wav file format is already ready for I2S.
+    audioFile.seek(44, SeekSet);  // Skip the header
 
     size_t bytesRead;
     int16_t audioBuffer[128]; // Buffer for audio data
