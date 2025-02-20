@@ -16,7 +16,7 @@ const char* password = "!Curtis215";
 #define DMA_BUF_COUNT   8 // modify for experiments
 #define DMA_BUF_LEN     64 // modify for experiments
 
-#define USE_WIFI_PACKAGE 0
+#define USE_WIFI_PACKAGE 1
 
 // Buffer to hold received audio data
 int16_t audioBuffer[512]; // modify for experiments
@@ -112,7 +112,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
       DynamicJsonDocument jsonDoc(1024);
       StaticJsonDocument<256> responseDoc;
       */
-      char response[256];
+      // char response[256];
 
       /* Parse the received JSON
       deserializeJson(jsonDoc, payload, length);
@@ -125,17 +125,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
       Serial.println("sent data");
       */
       // response to client
-      webSocket.sendBIN(num, (uint8_t*)response, strlen(response));
+      // webSocket.sendBIN(num, (uint8_t*)response, strlen(response));
 
       if (length % sizeof(int16_t) == 0) {
         memcpy(audioBuffer, payload, length); // payload, length
         size_t bytesWritten = 0;
         // i2s write START timestamp
-        Serial.println("start: ");
-        Serial.println(millis());
+        // Serial.println("start: ");
+        // Serial.println(millis());
         i2s_write(I2S_NUM_0, audioBuffer, length, &bytesWritten, portMAX_DELAY);
-        Serial.println("end: ");
-        Serial.println(millis());
+        // Serial.println("end: ");
+        // Serial.println(millis());
         // i2s write END timestamp (i2s_write time delay)
         // transmission_time + i2s_write = latency
 

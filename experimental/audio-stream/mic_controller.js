@@ -46,7 +46,7 @@ async function startMic() {
     // Request microphone access
     try {
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const audioContext = new AudioContext();
+        const audioContext = new AudioContext({ sampleRate: 48000 });
 
         // Load the AudioWorklet
         await audioContext.audioWorklet.addModule('pcm-processor.js');
@@ -60,14 +60,14 @@ async function startMic() {
             const pcmBuffer = event.data; // PCM data from the processor
             if (webSocket.readyState === WebSocket.OPEN) {
                 // console log START time
-                if (i > 0) {
-                    console.log("send time:");
-                    console.log(new Date().getTime());
+                // if (i > 0) {
+                    // console.log("send time:");
+                    // console.log(new Date().getTime());
                     webSocket.send(pcmBuffer); // Send PCM data as ArrayBuffer
-                    i--;
-                }
+                    // i--;
+                // }
             }
-        };
+        }; 
     } catch (error) {
         console.error('Error accessing microphone:', error);
         micButton.classList.remove('unmuted');
@@ -75,6 +75,7 @@ async function startMic() {
         micButton.textContent = 'Mic Access Denied';
     }
 
+    /* 
     webSocket.onmessage = (event) => {
         /* const response = JSON.parse(event.data);
         const clientSendTime = response.timestamp; // The original timestamp
@@ -82,11 +83,10 @@ async function startMic() {
     
         const rtt = clientReceiveTime - clientSendTime; // Round-trip time
         const oneWayDelay = rtt / 2;                    // Approximate one-way delay
-        */
 
         console.log("receive time:");
         console.log(new Date().getTime());
-    };
+    }; */
 }
 
 // Stop microphone and stop sending data
