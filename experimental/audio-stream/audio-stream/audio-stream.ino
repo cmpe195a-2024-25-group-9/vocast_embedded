@@ -5,16 +5,16 @@
 #include <ArduinoJson.h>
 
 // WiFi credentials
-const char* ssid = "HaqueWiFi";
-const char* password = "!Curtis215";
+const char* ssid = "Fardin's iPhone";
+const char* password = "freewifi";
 
 // I2S pins
 #define I2S_BCLK_PIN    15
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
 #define SAMPLE_RATE     48000
-#define DMA_BUF_COUNT   8 // modify for experiments
-#define DMA_BUF_LEN     64 // modify for experiments
+#define DMA_BUF_COUNT   4 // modify for experiments (try 4) or x*2
+#define DMA_BUF_LEN     32 // modify for experiments (try 32) or x*2
 
 #define USE_WIFI_PACKAGE 1
 
@@ -23,25 +23,6 @@ int16_t audioBuffer[512]; // modify for experiments
 
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
-
-/*
-i2s configuration experiments:
-audioBuffer size = 512
-dma buf count = 8
-dma buf len = 64
-latency = ?
-
-audioBuffer size = 256
-dma buf count = 6
-dma buf len = 256
-latency = ?
-
-audioBuffer size = 
-dma buf count = 
-dma buf len = 
-latency = ?
-
-*/
 
 void setup() {
   // Start Serial Monitor
@@ -56,6 +37,7 @@ void setup() {
   else {
     // Connect to WiFi
     WiFi.begin(ssid, password);
+    WiFi.setSleep(false);
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
@@ -107,39 +89,21 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
       break;
 
     case WStype_BIN: {
-      Serial.println("in payload");
-      /* Declare variables at the beginning
-      DynamicJsonDocument jsonDoc(1024);
-      StaticJsonDocument<256> responseDoc;
-      */
-      // char response[256];
-
-      /* Parse the received JSON
-      deserializeJson(jsonDoc, payload, length);
-
-      // Prepare the response
-      responseDoc["timestamp"] = jsonDoc["timestamp"]; // Echo the timestamp
-      serializeJson(responseDoc, response, sizeof(response));
-
-      // Send response as binary data
-      Serial.println("sent data");
-      */
-      // response to client
-      // webSocket.sendBIN(num, (uint8_t*)response, strlen(response));
-
+      // Serial.println(F("in payload"));
       if (length % sizeof(int16_t) == 0) {
-        memcpy(audioBuffer, payload, length); // payload, length
-        size_t bytesWritten = 0;
-        // i2s write START timestamp
-        // Serial.println("start: ");
-        // Serial.println(millis());
-        i2s_write(I2S_NUM_0, audioBuffer, length, &bytesWritten, portMAX_DELAY);
-        // Serial.println("end: ");
-        // Serial.println(millis());
-        // i2s write END timestamp (i2s_write time delay)
-        // transmission_time + i2s_write = latency
+        if (!payload || length == 0 || length > 1024) {  // Ensure payload is valid
+          Serial.println("Invalid payload received!");
+          return;
+        }
+        memcpy(audioBuffer, payload, min(length, sizeof(audioBuffer))); // payload, length
+        size_t bytesWritten = 0; // put in directly instead of into auido buffer 
+        esp_err_t err = i2s_write(I2S_NUM_0, payload, length, &bytesWritten, 10 / portTICK_PERIOD_MS); // pass into audio buffer instead of payload
 
-        // print END TIME this includes overhead from inside black box of esp
+        if (err != ESP_OK) {
+            Serial.println(F("I2S write failed!"));
+        } 
+        // free(audioBuffer);
+        memset(audioBuffer, 0, sizeof(audioBuffer));
       } 
       break;
     }
