@@ -16,7 +16,8 @@ const int SAMPLE_COUNT = SAMPLE_RATE / WAVE_FREQUENCY; // Samples per sine wave 
 int16_t samples[SAMPLE_COUNT]; // Buffer to hold sine wave samples
 
 void setup() {
-    Serial.begin(9600);
+    // change baud rate for different esp 
+    Serial.begin(115200);
     Serial.println("Starting I2S Sine Wave Generator");
 
     // I2S Configuration
