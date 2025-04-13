@@ -5,8 +5,8 @@
 #include <ArduinoJson.h>
 
 // WiFi credentials
-const char* ssid = "Fardin's iPhone";
-const char* password = "freewifi";
+const char* ssid = "";
+const char* password = "";
 
 // I2S pins
 #define I2S_BCLK_PIN    15
@@ -18,8 +18,7 @@ const char* password = "freewifi";
 
 #define USE_WIFI_PACKAGE 1
 
-// Buffer to hold received audio data
-int16_t audioBuffer[512]; // modify for experiments
+int16_t audioBuffer[512];
 
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -84,27 +83,14 @@ void loop() {
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch(type) {
-    case WStype_TEXT:
-      // Handle text messages (optional)
-      break;
-
     case WStype_BIN: {
-      // Serial.println(F("in payload"));
-      if (length % sizeof(int16_t) == 0) {
-        if (!payload || length == 0 || length > 1024) {  // Ensure payload is valid
-          Serial.println("Invalid payload received!");
-          return;
-        }
-        memcpy(audioBuffer, payload, min(length, sizeof(audioBuffer))); // payload, length
-        size_t bytesWritten = 0; // put in directly instead of into auido buffer 
-        esp_err_t err = i2s_write(I2S_NUM_0, payload, length, &bytesWritten, 10 / portTICK_PERIOD_MS); // pass into audio buffer instead of payload
-
-        if (err != ESP_OK) {
-            Serial.println(F("I2S write failed!"));
-        } 
-        // free(audioBuffer);
-        memset(audioBuffer, 0, sizeof(audioBuffer));
-      } 
+      // memcpy(audioBuffer, payload, min(length, sizeof(audioBuffer)));
+      size_t bytesWritten;
+      esp_err_t res = i2s_write(I2S_NUM_0, payload, length, &bytesWritten, 10 / portTICK_PERIOD_MS);
+      // Serial.println("wrote");
+      if (res != ESP_OK) {
+          Serial.println("I2S Write Error");
+      }
       break;
     }
 

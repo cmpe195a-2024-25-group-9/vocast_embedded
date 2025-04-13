@@ -1,13 +1,29 @@
 let isMicActive = false;
 let micStream;
 let webSocket;
-let i = 10;
 const micButton = document.getElementById('micStatusButton');
+
+/*   old snippet from live streaming audio on i2s on esp
+      if (length % sizeof(int16_t) == 0) {
+        if (!payload || length == 0 || length > 1024) {  // Ensure payload is valid
+          Serial.println("Invalid payload received!");
+          return;
+        }
+        memcpy(audioBuffer, payload, min(length, sizeof(audioBuffer))); // payload, length
+        size_t bytesWritten = 0; // put in directly instead of into auido buffer 
+        esp_err_t err = i2s_write(I2S_NUM_0, payload, length, &bytesWritten, 10 / portTICK_PERIOD_MS); // pass into audio buffer instead of payload
+
+        if (err != ESP_OK) {
+            Serial.println(F("I2S write failed!"));
+        } 
+        // free(audioBuffer);
+        memset(audioBuffer, 0, sizeof(audioBuffer));
+      } */
 
 // Initialize WebSocket connection
 function initWebSocket() {
     // Connect to the ESP32 WebSocket server (replace with actual ESP32 IP address)
-    webSocket = new WebSocket('ws://10.0.0.222:81');  // Replace with your ESP32 IP address
+    webSocket = new WebSocket('ws://172.20.10.3:81');  // Replace with your ESP32 IP address
     
     webSocket.onopen = () => {
         console.log('WebSocket connected!');
