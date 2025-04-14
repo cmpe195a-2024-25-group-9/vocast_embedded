@@ -23,12 +23,12 @@ const micButton = document.getElementById('micStatusButton');
 // Initialize WebSocket connection
 function initWebSocket() {
     // Connect to the ESP32 WebSocket server (replace with actual ESP32 IP address)
-    webSocket = new WebSocket('ws://172.20.10.3:81');  // Replace with your ESP32 IP address
-    
+    webSocket = new WebSocket('ws://10.0.0.13:81');  // Replace with your ESP32 IP address
+
     webSocket.onopen = () => {
         console.log('WebSocket connected!');
     };
-    
+
     webSocket.onclose = () => {
         console.log('WebSocket closed!');
     };
@@ -61,7 +61,14 @@ async function startMic() {
 
     // Request microphone access
     try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000
+            } 
+        });
         const audioContext = new AudioContext({ sampleRate: 48000 });
 
         // Load the AudioWorklet
@@ -75,15 +82,14 @@ async function startMic() {
         pcmProcessor.port.onmessage = (event) => {
             const pcmBuffer = event.data; // PCM data from the processor
             if (webSocket.readyState === WebSocket.OPEN) {
-                // console log START time
-                // if (i > 0) {
-                    // console.log("send time:");
-                    // console.log(new Date().getTime());
-                    webSocket.send(pcmBuffer); // Send PCM data as ArrayBuffer
-                    // i--;
-                // }
+                /* setInterval(() => {
+                    if (pcmBuffer) {
+                        webSocket.send(pcmBuffer);
+                    }
+                }, 3); */
+                webSocket.send(pcmBuffer); // Send PCM data as ArrayBuffer
             }
-        }; 
+        };
     } catch (error) {
         console.error('Error accessing microphone:', error);
         micButton.classList.remove('unmuted');

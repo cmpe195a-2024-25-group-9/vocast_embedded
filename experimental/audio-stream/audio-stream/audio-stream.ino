@@ -13,12 +13,10 @@ const char* password = "";
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
 #define SAMPLE_RATE     48000
-#define DMA_BUF_COUNT   4 // modify for experiments (try 4) or x*2
-#define DMA_BUF_LEN     32 // modify for experiments (try 32) or x*2
+#define DMA_BUF_COUNT   4
+#define DMA_BUF_LEN     32 
 
 #define USE_WIFI_PACKAGE 1
-
-int16_t audioBuffer[512];
 
 // WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -84,10 +82,8 @@ void loop() {
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch(type) {
     case WStype_BIN: {
-      // memcpy(audioBuffer, payload, min(length, sizeof(audioBuffer)));
       size_t bytesWritten;
       esp_err_t res = i2s_write(I2S_NUM_0, payload, length, &bytesWritten, 10 / portTICK_PERIOD_MS);
-      // Serial.println("wrote");
       if (res != ESP_OK) {
           Serial.println("I2S Write Error");
       }
