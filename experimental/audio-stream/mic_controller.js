@@ -23,7 +23,7 @@ const micButton = document.getElementById('micStatusButton');
 // Initialize WebSocket connection
 function initWebSocket() {
     // Connect to the ESP32 WebSocket server (replace with actual ESP32 IP address)
-    webSocket = new WebSocket('ws://10.0.0.13:81');  // Replace with your ESP32 IP address
+    webSocket = new WebSocket('ws://10.0.0.12:81');  // Replace with your ESP32 IP address
 
     webSocket.onopen = () => {
         console.log('WebSocket connected!');
