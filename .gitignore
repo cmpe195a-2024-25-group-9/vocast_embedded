@@ -1,3 +1,6 @@
+# ignore python venv
+venv/
+
 # mac files
 .DS_Store
 
