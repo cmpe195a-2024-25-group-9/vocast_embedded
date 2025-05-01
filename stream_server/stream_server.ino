@@ -15,15 +15,15 @@
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
 #define SAMPLE_RATE     48000
-#define DMA_BUF_COUNT   4
-#define DMA_BUF_LEN     128
+#define DMA_BUF_COUNT   2
+#define DMA_BUF_LEN     512
 
 // UDP config
 #define UDP_PORT        12345
-#define UDP_BUFFER_SIZE 512
+#define PACKET_SIZE     1024
 
+uint8_t packetBuffer[PACKET_SIZE];
 WiFiUDP udp;
-uint8_t udpBuffer[UDP_BUFFER_SIZE];
 int packetCount = 0;
 
 void setup() {
@@ -84,25 +84,11 @@ void setup() {
 void loop() {
   int packetSize = udp.parsePacket();
   if (packetSize) {
-    int len = udp.read(udpBuffer, UDP_BUFFER_SIZE);
-    packetCount++;
-
-    if (len % 4 != 0) {
-      Serial.printf("Misaligned packet size: %d\n", len);
-      return; // or trim/pad to nearest 4-byte boundary
-    }
-
-    if (packetCount % 100 == 0) {
-      int16_t* samples = (int16_t*)udpBuffer;
-      Serial.printf("Sample R: %d, L: %d\n", samples[0], samples[1]);
-    }
-
-    if (len > 0) {
-      size_t bytesWritten;
-      esp_err_t res = i2s_write(I2S_NUM_0, udpBuffer, len, &bytesWritten, portMAX_DELAY);
-      if (res != ESP_OK) {
-        Serial.println("I2S Write Error");
-      }
-    }
+    /* packetCount++;
+    if (packetCount % 500 == 0) { 
+      Serial.println(F("packet received"));
+    } */
+    size_t bytes_written;
+    i2s_write(I2S_NUM_0, packetBuffer, udp.read(packetBuffer, PACKET_SIZE), &bytes_written, portMAX_DELAY);
   }
 }
