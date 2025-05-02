@@ -5,7 +5,7 @@ import numpy as np
 # Audio settings
 SAMPLE_RATE = 48000  # Match ESP32
 CHUNK_SIZE = 256     # Mono samples per packet
-UDP_IP = "10.0.1.2"  # ESP32 IP address
+UDP_IP = "10.0.0.12"  # ESP32 IP address
 UDP_PORT = 12345
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

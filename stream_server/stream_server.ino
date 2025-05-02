@@ -15,8 +15,8 @@
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
 #define SAMPLE_RATE     48000
-#define DMA_BUF_COUNT   2
-#define DMA_BUF_LEN     512
+#define DMA_BUF_COUNT   4
+#define DMA_BUF_LEN     256
 
 // UDP config
 #define UDP_PORT        12345
