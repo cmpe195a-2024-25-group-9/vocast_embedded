@@ -50,10 +50,6 @@ void setup() {
   Serial.print(F("ESP32 IP Address: "));
   Serial.println(WiFi.localIP());
 
-  // Start UDP listener
-  udp.begin(UDP_PORT);
-  Serial.printf("UDP listening on port %d\n", UDP_PORT);
-
   // I2S configuration
   i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
@@ -79,13 +75,20 @@ void setup() {
   i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
   i2s_set_pin(I2S_NUM_0, &pin_config);
   Serial.println("I2S Initialized.");
+  // Start UDP listener
+  udp.begin(UDP_PORT);
+  Serial.printf("UDP listening on port: %d\n", UDP_PORT);
+  // broadcast ip
+  udp.beginPacket("255.255.255.255", 12345);
+  udp.print("ESP IP: " + WiFi.localIP().toString());
+  udp.endPacket();
 }
 
 void loop() {
   int packetSize = udp.parsePacket();
   if (packetSize) {
-    /* packetCount++;
-    if (packetCount % 500 == 0) { 
+    packetCount++;
+    /* if (packetCount % 500 == 0) { 
       Serial.println(F("packet received"));
     } */
     size_t bytes_written;
