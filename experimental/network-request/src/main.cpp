@@ -1,61 +1,121 @@
-/*
-  Simple network using wifi library to configure esp to network
-  makes request to test route to print content
+/* 
+  Instructions for flashing code: (check phone for pin config)
+    - plug in serial usb into esp and board
+    - put red cover on two pins on esp
+    - upload and monitor code
+    - once code is done uploading, take off red cover and press reboot button
+    - unplug from serial and plug into power
+    - code should start runnning now
 */
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <DNSServer.h>
-#include <WebServer.h>
+#include <WiFiUdp.h>
+#include <driver/i2s.h>
 #include <WiFiManager.h>
-#include <HTTPClient.h>
 
-// reference: https://loginov-rocks.medium.com/quick-start-with-nodemcu-v3-esp8266-arduino-ecosystem-and-platformio-ide-b8415bf9a038
+// WiFi config constants
+#define USE_WIFI_PACKAGE 1
+#define RESET_WIFI 0
+
+#define WIFI_SSID ""
+#define WIFI_PASS ""
+
+// I2S pins and config
+#define AMP_ENABLE_PIN 13
+#define I2S_BCLK_PIN 47
+#define I2S_LRC_PIN 14
+#define I2S_DOUT_PIN 21
+
+#define SAMPLE_RATE 48000
+#define DMA_BUF_COUNT 4
+#define DMA_BUF_LEN 256
+
+// UDP config
+#define UDP_PORT 12345
+#define PACKET_SIZE 1024
+
+uint8_t packetBuffer[PACKET_SIZE];
+WiFiUDP udp;
+int packetCount = 0;
+
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-  // Initialize WiFiManager
-  WiFiManager wifiManager;
-  wifiManager.autoConnect("esp");
+  pinMode(AMP_ENABLE_PIN, OUTPUT);
+  digitalWrite(AMP_ENABLE_PIN, HIGH);
+  delay(2000);
 
-  // Confirm connection
-  Serial.println("Connected!");
+  if (USE_WIFI_PACKAGE)
+  {
+    WiFiManager wifiManager;
+    if (RESET_WIFI)
+    {
+      wifiManager.resetSettings();
+      delay(1000);
+    }
+    wifiManager.autoConnect("esp");
+    Serial.println(F("Connected to WiFi"));
+  }
+  else
+  {
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    WiFi.setSleep(false);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println(F("Connected to WiFi"));
+  }
+
+  Serial.print(F("ESP32 IP Address: "));
+  Serial.println(WiFi.localIP());
+
+  // I2S configuration
+  i2s_config_t i2s_config = {
+      .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+      .sample_rate = SAMPLE_RATE,
+      .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+      .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+      .communication_format = I2S_COMM_FORMAT_I2S,
+      .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+      .dma_buf_count = DMA_BUF_COUNT,
+      .dma_buf_len = DMA_BUF_LEN,
+      .use_apll = false,
+      .tx_desc_auto_clear = true,
+      .fixed_mclk = 0};
+
+  i2s_pin_config_t pin_config = {
+      .bck_io_num = I2S_BCLK_PIN,
+      .ws_io_num = I2S_LRC_PIN,
+      .data_out_num = I2S_DOUT_PIN,
+      .data_in_num = I2S_PIN_NO_CHANGE};
+
+  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+  i2s_set_pin(I2S_NUM_0, &pin_config);
+  Serial.println("I2S Initialized.");
+  // Start UDP listener
+  udp.begin(UDP_PORT);
+  Serial.printf("UDP listening on port: %d\n", UDP_PORT);
+  // broadcast ip
+  udp.beginPacket("255.255.255.255", 12345);
+  udp.print("ESP IP: " + WiFi.localIP().toString());
+  udp.endPacket();
 }
 
 void loop()
 {
-  // Wait for WiFi connection
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    WiFiClient client;
-
-    // Specify the URL for the request
-    http.begin(client, "http://jsonplaceholder.typicode.com/posts/1");
-
-    // Send HTTP GET request
-    int httpCode = http.GET();
-
-    // Check the returning HTTP status code
-    if (httpCode > 0) {
-      // HTTP header has been sent and Server response header has been handled
-      Serial.printf("[HTTP] GET... code: %d\n", httpCode);
-
-      // File found at server
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        Serial.println("Response:");
-        Serial.println(payload);
-      }
-    } else {
-      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-    }
-
-    http.end(); // Free resources
-
-  } else {
-    Serial.println("WiFi Disconnected");
+  int packetSize = udp.parsePacket();
+  if (packetSize)
+  {
+    packetCount++;
+    /* if (packetCount % 500 == 0) {
+      Serial.println(F("packet received"));
+    } */
+    size_t bytes_written;
+    int32_t sample = udp.read(packetBuffer, PACKET_SIZE);
+    i2s_write(I2S_NUM_0, packetBuffer, sample, &bytes_written, portMAX_DELAY);
   }
-
-  delay(10000); // Make the request every 10 seconds
 }
