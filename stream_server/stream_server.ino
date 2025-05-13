@@ -11,6 +11,7 @@
 #define WIFI_PASS ""
 
 // I2S pins and config
+#define AMP_ENABLE_PIN  13
 #define I2S_BCLK_PIN    15
 #define I2S_LRC_PIN     16
 #define I2S_DOUT_PIN    17
@@ -28,6 +29,9 @@ int packetCount = 0;
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(AMP_ENABLE_PIN, OUTPUT);
+  digitalWrite(AMP_ENABLE_PIN, HIGH);
 
   if (USE_WIFI_PACKAGE) {
     WiFiManager wifiManager;
@@ -54,7 +58,7 @@ void setup() {
   i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
     .sample_rate = SAMPLE_RATE,
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT ,
     .communication_format = I2S_COMM_FORMAT_I2S,
     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
@@ -92,6 +96,7 @@ void loop() {
       Serial.println(F("packet received"));
     } */
     size_t bytes_written;
-    i2s_write(I2S_NUM_0, packetBuffer, udp.read(packetBuffer, PACKET_SIZE), &bytes_written, portMAX_DELAY);
+    int32_t sample = (int32_t)udp.read(packetBuffer, PACKET_SIZE) << 16;
+    i2s_write(I2S_NUM_0, packetBuffer, sample, &bytes_written, portMAX_DELAY);
   }
 }
